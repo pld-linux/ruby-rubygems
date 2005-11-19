@@ -1,7 +1,3 @@
-%define	ruby_archdir	%(ruby -r rbconfig -e 'print Config::CONFIG["archdir"]')
-%define ruby_rubylibdir %(ruby -r rbconfig -e 'print Config::CONFIG["rubylibdir"]')
-%define ruby_gemdir	%{_libdir}/ruby/gems/%(ruby -r rbconfig -e 'print Config::CONFIG["ruby_version"]')
-
 Summary:	Ruby package manager
 Summary(pl):	Zarz±dca pakietów dla jêzyka Ruby
 Name:		ruby-RubyGems
@@ -12,11 +8,14 @@ Group:		Development/Languages
 Source0:	http://rubyforge.org/frs/download.php/729/rubygems-%{version}.tgz
 # Source0-md5:	c4a0faa9f876ad805ae80d1396a29d97
 URL:		http://borges.rubyforge.org/
+BuildRequires:	rpmbuild(macros) >= 1.263
 BuildRequires:	ruby
 BuildRequires:	ruby-devel
 Requires:	ruby
 #BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+
+%define		_gemdir		%{_libdir}/ruby/gems/%{ruby_version}
 
 %description
 RubyGems is the Ruby standard for publishing and managing third party
@@ -43,14 +42,14 @@ rm -rf $RPM_BUILD_ROOT
 %doc README*
 %attr(755,root,root) %{_bindir}/*
 %dir %{_libdir}/ruby/gems
-%dir %{ruby_gemdir}
-%dir %{ruby_gemdir}/cache
-%{ruby_gemdir}/cache/sources-0.0.1.gem
-%dir %{ruby_gemdir}/specifications
-%{ruby_gemdir}/specifications/sources-0.0.1.gemspec
-%dir %{ruby_gemdir}/gems
-%{ruby_gemdir}/gems/sources-0.0.1/lib/sources.rb
-%dir %{ruby_gemdir}/gems/cache
-%dir %{ruby_gemdir}/gems/specifications
-%dir %{ruby_gemdir}/gems/gems
-%dir %{ruby_gemdir}/doc
+%dir %{_gemdir}
+%dir %{_gemdir}/cache
+%{_gemdir}/cache/sources-0.0.1.gem
+%dir %{_gemdir}/specifications
+%{_gemdir}/specifications/sources-0.0.1.gemspec
+%dir %{_gemdir}/gems
+%{_gemdir}/gems/sources-0.0.1/lib/sources.rb
+%dir %{_gemdir}/gems/cache
+%dir %{_gemdir}/gems/specifications
+%dir %{_gemdir}/gems/gems
+%dir %{_gemdir}/doc
