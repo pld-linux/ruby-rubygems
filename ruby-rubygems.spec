@@ -9,7 +9,6 @@ Source0:	http://rubyforge.org/frs/download.php/729/rubygems-%{version}.tgz
 # Source0-md5:	c4a0faa9f876ad805ae80d1396a29d97
 URL:		http://borges.rubyforge.org/
 BuildRequires:	rpmbuild(macros) >= 1.263
-BuildRequires:	ruby-modules
 BuildRequires:	ruby-devel
 Requires:	ruby-modules
 #BuildArch:	noarch
