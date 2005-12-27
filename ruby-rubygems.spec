@@ -2,16 +2,16 @@ Summary:	Ruby package manager
 Summary(pl):	Zarz±dca pakietów dla jêzyka Ruby
 Name:		ruby-RubyGems
 Version:	0.6.1
-Release:	1
+Release:	2
 License:	GPL
 Group:		Development/Languages
 Source0:	http://rubyforge.org/frs/download.php/729/rubygems-%{version}.tgz
 # Source0-md5:	c4a0faa9f876ad805ae80d1396a29d97
 URL:		http://borges.rubyforge.org/
 BuildRequires:	rpmbuild(macros) >= 1.263
-BuildRequires:	ruby
+BuildRequires:	ruby-modules
 BuildRequires:	ruby-devel
-Requires:	ruby
+Requires:	ruby-modules
 #BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
