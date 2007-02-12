@@ -1,5 +1,5 @@
 Summary:	Ruby package manager
-Summary(pl.UTF-8):   Zarządca pakietów dla języka Ruby
+Summary(pl.UTF-8):	Zarządca pakietów dla języka Ruby
 Name:		ruby-RubyGems
 Version:	0.8.11
 Release:	1
