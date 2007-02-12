@@ -1,5 +1,5 @@
 Summary:	Ruby package manager
-Summary(pl):	Zarz±dca pakietów dla jêzyka Ruby
+Summary(pl.UTF-8):   ZarzÄ…dca pakietÃ³w dla jÄ™zyka Ruby
 Name:		ruby-RubyGems
 Version:	0.8.11
 Release:	1
@@ -21,9 +21,9 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 RubyGems is the Ruby standard for publishing and managing third party
 libraries.
 
-%description -l pl
-RubyGems to standard tworzenia i zarz±dzania zewnêtrznymi bibliotekami
-dla jêzyka Ruby.
+%description -l pl.UTF-8
+RubyGems to standard tworzenia i zarzÄ…dzania zewnÄ™trznymi bibliotekami
+dla jÄ™zyka Ruby.
 
 %prep
 %setup -q -n rubygems-%{version}
