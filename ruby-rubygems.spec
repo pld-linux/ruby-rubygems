@@ -2,7 +2,7 @@ Summary:	Ruby package manager
 Summary(pl.UTF-8):	Zarządca pakietów dla języka Ruby
 Name:		ruby-RubyGems
 Version:	0.8.11
-Release:	2
+Release:	3
 License:	GPL
 Group:		Development/Languages
 Source0:	http://rubyforge.org/frs/download.php/5207/rubygems-%{version}.tgz
@@ -58,6 +58,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_gemdir}/specifications
 %{_gemdir}/specifications/sources-0.0.1.gemspec
 %dir %{_gemdir}/gems
+%dir %{_gemdir}/gems/sources-0.0.1
 %dir %{_gemdir}/gems/sources-0.0.1/lib
 %{_gemdir}/gems/sources-0.0.1/lib/sources.rb
 %dir %{_gemdir}/doc
