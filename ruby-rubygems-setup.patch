@@ -1,0 +1,82 @@
+diff -Nur b.rubygems-1.2.0/setup.rb n.rubygems-1.2.0/setup.rb
+--- b.rubygems-1.2.0/setup.rb	2008-06-22 01:51:11.000000000 +0200
++++ n.rubygems-1.2.0/setup.rb	2008-08-21 18:14:59.000000000 +0200
+@@ -29,7 +29,8 @@
+     [ '--no-rdoc',                      GetoptLong::NO_ARGUMENT ],
+     [ '--no-ri',                        GetoptLong::NO_ARGUMENT ],
+     [ '--vendor',                       GetoptLong::NO_ARGUMENT ],
+-    [ '--destdir',                      GetoptLong::REQUIRED_ARGUMENT ]
++    [ '--destdir',                      GetoptLong::REQUIRED_ARGUMENT ],
++    [ '--rdocdir',                      GetoptLong::REQUIRED_ARGUMENT ]
+ )
+ 
+ prefix = ''
+@@ -38,6 +39,7 @@
+ ri = true
+ site_or_vendor = :sitelibdir
+ install_destdir = ''
++rdoc_dir = ''
+ 
+ opts.each do | opt, arg |
+   case opt
+@@ -63,6 +65,8 @@
+                          (Requires Ruby 1.8.7)
+   --destdir              Root directory to install rubygems into
+                          Used mainly for packaging RubyGems
++  --rdocdir              Put rdoc documentation in different location than gem's default (PLD addition)
++
+ HELP
+     exit 0
+ 
+@@ -87,6 +91,9 @@
+ 
+   when '--destdir'
+     install_destdir = File.expand_path(arg)
++
++  when '--rdocdir'
++    rdoc_dir = File.expand_path(arg)
+   end
+ end
+ 
+@@ -168,7 +175,7 @@
+                          end
+ 
+     dest_file = File.join bin_dir, bin_file_formatted
+-    bin_tmp_file = File.join Dir.tmpdir, bin_file
++    bin_tmp_file = File.join((install_destdir.empty? ? Dir.tmpdir : install_destdir), bin_file)
+ 
+     begin
+       cp bin_file, bin_tmp_file
+@@ -290,7 +297,7 @@
+   end
+ 
+   if rdoc then
+-    rdoc_dir = File.join rubygems_doc_dir, 'rdoc'
++    rdoc_dir = rdoc_dir.empty? ? File.join(rubygems_doc_dir, 'rdoc') : rdoc_dir
+     puts "Installing #{rubygems_name} rdoc into #{rdoc_dir}"
+     run_rdoc '--op', rdoc_dir
+   end
+@@ -299,23 +306,6 @@
+   puts "Set the GEM_HOME environment variable if you want RDoc generated"
+ end
+ 
+-puts
+-puts "-" * 78
+-puts
+-
+-release_notes = File.join File.dirname(__FILE__), 'doc', 'release_notes',
+-                          "rel_#{Gem::RubyGemsVersion.gsub '.', '_'}.rdoc"
+-
+-if File.exist? release_notes then
+-  puts File.read(release_notes)
+-else
+-  puts "Oh-no! Unable to find release notes in:\n\t#{release_notes}"
+-end
+-
+-puts
+-puts "-" * 78
+-puts
+-
+ puts "RubyGems installed the following executables:"
+ puts bin_file_names.map { |name| "\t#{name}\n" }
+ puts
