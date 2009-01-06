@@ -1,4 +1,3 @@
-%define		_name	%(echo %{name} | tr '[:upper:]' '[:lower:]')
 Summary:	Ruby package manager
 Summary(pl.UTF-8):	Zarządca pakietów dla języka Ruby
 Name:		ruby-RubyGems
@@ -10,14 +9,15 @@ Source0:	http://files.rubyforge.vm.bytemark.co.uk/rubygems/rubygems-%{version}.t
 # Source0-md5:	b77a4234360735174d1692e6fc598402
 Patch0:		%{name}-setup.patch
 URL:		http://rubygems.org/
-#BuildRequires:	rpmbuild(macros) >= 1.410
+BuildRequires:	ruby >= 1:1.8.6
 BuildRequires:	ruby-devel
 BuildRequires:	sed >= 4.0
 %{?ruby_mod_ver_requires_eq}
 #BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
-%define		_gemdir		%{_libdir}/ruby/gems/%{ruby_version}
+# nothing to be placed there. we're not noarch only because of ruby packaging
+%define		_enable_debug_packages	0
 
 %description
 RubyGems is the Ruby standard for publishing and managing third party
@@ -30,38 +30,53 @@ dla języka Ruby.
 %package ri
 Summary:	Ruby Gem package manager ri documentation
 Summary(pl.UTF-8):	Dokumentacja w formacie ri dla menadżera pakietów Ruby
-Group:	Documentation
+Group:		Documentation
+Requires:	ruby
 
 %description ri
 Ruby Gem package manager ri documentation.
 
 %description ri -l pl.UTF-8
-Dokumentacji w formacie ri dla menadżera pakietów Ruby. 
+Dokumentacji w formacie ri dla menadżera pakietów Ruby.
 
 %package rdoc
 Summary:	Ruby Gem package manager HTML documentation
 Summary(pl.UTF-8):	Dokumentacja w formacie HTML dla menadżera pakietów Ruby
-Group:	Documentation
+Group:		Documentation
+Requires:	ruby >= 1:1.8.7-4
 
 %description rdoc
 Ruby Gem package manager HTML documentation.
 
 %description rdoc -l pl.UTF-8
-Dokumentacja w formacie HTML dla menadżera pakietów Ruby. 
+Dokumentacja w formacie HTML dla menadżera pakietów Ruby.
 
 %prep
 %setup -q -n rubygems-%{version}
 %patch0 -p1
 
 %build
+rdoc --ri --op ri lib
+rdoc --op rdoc lib
+rm -f ri/created.rid
+
+# external packages?
+rm -rf ri/Config
+rm -rf ri/Kernel
+rm -rf ri/OpenSSL
+rm -rf ri/TempIO
 
 %install
 rm -rf $RPM_BUILD_ROOT
-
+install -d $RPM_BUILD_ROOT{%{ruby_ridir},%{ruby_rdocdir}}
 ruby setup.rb \
 	--vendor \
-	--rdocdir=./rdoc \
-	--destdir="$RPM_BUILD_ROOT"
+	--no-rdoc \
+	--no-ri \
+	--destdir=$RPM_BUILD_ROOT
+
+cp -a ri/* $RPM_BUILD_ROOT%{ruby_ridir}
+cp -a rdoc $RPM_BUILD_ROOT%{ruby_rdocdir}/%{name}-%{version}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -83,15 +98,11 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{ruby_vendorlibdir}/rbconfig
 %{ruby_vendorlibdir}/rbconfig/datadir.rb
 %dir %{_libdir}/ruby/gems
-%dir %{_gemdir}
-%dir %{_gemdir}/doc
-%dir %{_gemdir}/doc/rubygems-%{version}
 
 %files ri
 %defattr(644,root,root,755)
-%dir %{_gemdir}/doc/rubygems-%{version}/ri
-%{_gemdir}/doc/rubygems-%{version}/ri/*
+%{ruby_ridir}/Gem
 
 %files rdoc
 %defattr(644,root,root,755)
-%doc rdoc/*
+%{ruby_rdocdir}/%{name}-%{version}
