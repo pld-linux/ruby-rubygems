@@ -1,13 +1,14 @@
 Summary:	Ruby package manager
 Summary(pl.UTF-8):	Zarządca pakietów dla języka Ruby
 Name:		ruby-RubyGems
-Version:	1.2.0
+Version:	1.3.1
 Release:	1
 License:	GPL
 Group:		Development/Languages
 Source0:	http://files.rubyforge.vm.bytemark.co.uk/rubygems/rubygems-%{version}.tgz
-# Source0-md5:	b77a4234360735174d1692e6fc598402
+# Source0-md5:	a04ee6f6897077c5b75f5fd1e134c5a9
 Patch0:		%{name}-setup.patch
+Patch1:		%{name}-DESTDIR.patch
 URL:		http://rubygems.org/
 BuildRequires:	ruby >= 1:1.8.6
 BuildRequires:	ruby-devel
@@ -54,6 +55,7 @@ Dokumentacja w formacie HTML dla menadżera pakietów Ruby.
 %prep
 %setup -q -n rubygems-%{version}
 %patch0 -p1
+%patch1 -p1
 
 %build
 rdoc --ri --op ri lib
@@ -97,7 +99,7 @@ rm -rf $RPM_BUILD_ROOT
 %{ruby_vendorlibdir}/rubygems/*/*.rb
 %dir %{ruby_vendorlibdir}/rbconfig
 %{ruby_vendorlibdir}/rbconfig/datadir.rb
-%dir %{_libdir}/ruby/gems
+#%%dir %{_libdir}/ruby/gems
 
 %files ri
 %defattr(644,root,root,755)
