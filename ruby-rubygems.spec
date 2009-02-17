@@ -9,6 +9,7 @@ Source0:	http://files.rubyforge.vm.bytemark.co.uk/rubygems/rubygems-%{version}.t
 # Source0-md5:	a04ee6f6897077c5b75f5fd1e134c5a9
 Patch0:		%{name}-setup.patch
 Patch1:		%{name}-DESTDIR.patch
+Patch2:		%{name}-EACCES.patch
 URL:		http://rubygems.org/
 BuildRequires:	ruby >= 1:1.8.6
 BuildRequires:	ruby-devel
@@ -56,6 +57,7 @@ Dokumentacja w formacie HTML dla menadżera pakietów Ruby.
 %setup -q -n rubygems-%{version}
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 
 %build
 rdoc --ri --op ri lib
