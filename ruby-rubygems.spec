@@ -17,6 +17,7 @@ BuildRequires:	ruby-devel
 BuildRequires:	sed >= 4.0
 %{?ruby_mod_ver_requires_eq}
 Obsoletes:	ruby-RubyGems
+Provides:	ruby-RubyGems
 #BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
