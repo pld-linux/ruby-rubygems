@@ -1,4 +1,4 @@
-%define tarname rubygems
+%define pkgname rubygems
 Summary:	Ruby package manager
 Summary(pl.UTF-8):	Zarządca pakietów dla języka Ruby
 Name:		ruby-%{pkgname}
