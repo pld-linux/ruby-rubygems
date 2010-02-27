@@ -1,11 +1,12 @@
+%define tarname rubygems
 Summary:	Ruby package manager
 Summary(pl.UTF-8):	Zarządca pakietów dla języka Ruby
-Name:		ruby-RubyGems
+Name:		ruby-%{pkgname}
 Version:	1.3.1
 Release:	1
 License:	GPL
 Group:		Development/Languages
-Source0:	http://files.rubyforge.vm.bytemark.co.uk/rubygems/rubygems-%{version}.tgz
+Source0:	http://files.rubyforge.vm.bytemark.co.uk/rubygems/%{pkgname}-%{version}.tgz
 # Source0-md5:	a04ee6f6897077c5b75f5fd1e134c5a9
 Patch0:		%{name}-setup.patch
 Patch1:		%{name}-DESTDIR.patch
@@ -15,6 +16,7 @@ BuildRequires:	ruby >= 1:1.8.6
 BuildRequires:	ruby-devel
 BuildRequires:	sed >= 4.0
 %{?ruby_mod_ver_requires_eq}
+Obsoletes:	ruby-RubyGems
 #BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
