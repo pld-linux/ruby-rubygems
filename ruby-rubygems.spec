@@ -2,17 +2,15 @@
 Summary:	Ruby package manager
 Summary(pl.UTF-8):	Zarządca pakietów dla języka Ruby
 Name:		ruby-%{pkgname}
-Version:	1.3.1
+Version:	1.3.6
 Release:	1
 License:	GPL
 Group:		Development/Languages
-Source0:	http://files.rubyforge.vm.bytemark.co.uk/rubygems/%{pkgname}-%{version}.tgz
-# Source0-md5:	a04ee6f6897077c5b75f5fd1e134c5a9
+Source0:	http://production.cf.rubygems.org/rubygems/%{pkgname}-%{version}.tgz
+# Source0-md5:	789ca8e9ad1d4d3fe5f0534fcc038a0d
 Patch0:		%{name}-setup.patch
-Patch1:		%{name}-DESTDIR.patch
-Patch2:		%{name}-EACCES.patch
 URL:		http://rubygems.org/
-BuildRequires:	ruby >= 1:1.8.6
+BuildRequires:	ruby >= 1:1.8.7
 BuildRequires:	ruby-devel
 BuildRequires:	sed >= 4.0
 %{?ruby_mod_ver_requires_eq}
@@ -58,9 +56,7 @@ Dokumentacja w formacie HTML dla menadżera pakietów Ruby.
 
 %prep
 %setup -q -n rubygems-%{version}
-%patch0 -p1
-%patch1 -p1
-%patch2 -p1
+#%patch0 -p1
 
 %build
 rdoc --ri --op ri lib
@@ -68,14 +64,12 @@ rdoc --op rdoc lib
 rm -f ri/created.rid
 
 # external packages?
-rm -rf ri/Config
-rm -rf ri/Kernel
-rm -rf ri/OpenSSL
-rm -rf ri/TempIO
+rm -rf ri/{*Config,Kernel,OpenSSL,TempIO}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{%{ruby_ridir},%{ruby_rdocdir}}
+
 ruby setup.rb \
 	--vendor \
 	--no-rdoc \
@@ -96,7 +90,6 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{ruby_vendorlibdir}/rubygems
 %{ruby_vendorlibdir}/rubygems/*.rb
 %dir %{ruby_vendorlibdir}/rubygems/commands
-%dir %{ruby_vendorlibdir}/rubygems/digest
 %dir %{ruby_vendorlibdir}/rubygems/ext
 %dir %{ruby_vendorlibdir}/rubygems/package
 %dir %{ruby_vendorlibdir}/rubygems/package/tar_reader
@@ -108,7 +101,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files ri
 %defattr(644,root,root,755)
-%{ruby_ridir}/Gem
+%{ruby_ridir}/Gem*
 
 %files rdoc
 %defattr(644,root,root,755)
