@@ -3,7 +3,7 @@ Summary:	Ruby package manager
 Summary(pl.UTF-8):	Zarządca pakietów dla języka Ruby
 Name:		ruby-%{pkgname}
 Version:	1.3.6
-Release:	1
+Release:	2
 License:	GPL
 Group:		Development/Languages
 Source0:	http://production.cf.rubygems.org/rubygems/%{pkgname}-%{version}.tgz
