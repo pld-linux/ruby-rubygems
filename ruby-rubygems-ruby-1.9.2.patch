@@ -1,0 +1,485 @@
+diff -ur rubygems-1.3.7/lib/rubygems/config_file.rb ruby-1.9.2/lib/rubygems/config_file.rb
+--- rubygems-1.3.7/lib/rubygems/config_file.rb	2010-02-16 05:14:16.000000000 +0100
++++ ruby-1.9.2/lib/rubygems/config_file.rb	2010-12-02 14:42:41.000000000 +0100
+@@ -47,21 +47,8 @@
+ 
+   system_config_path =
+     begin
+-      require 'Win32API'
+-
+-      CSIDL_COMMON_APPDATA = 0x0023
+-      path = 0.chr * 260
+-      if RUBY_VERSION > '1.9' then
+-        SHGetFolderPath = Win32API.new 'shell32', 'SHGetFolderPath', 'PLPLP',
+-                                       'L', :stdcall
+-        SHGetFolderPath.call nil, CSIDL_COMMON_APPDATA, nil, 1, path
+-      else
+-        SHGetFolderPath = Win32API.new 'shell32', 'SHGetFolderPath', 'LLLLP',
+-                                       'L'
+-        SHGetFolderPath.call 0, CSIDL_COMMON_APPDATA, 0, 1, path
+-      end
+-
+-      path.strip
++      require 'etc.so'
++      Etc.sysconfdir
+     rescue LoadError
+       '/etc'
+     end
+diff -ur rubygems-1.3.7/lib/rubygems/custom_require.rb ruby-1.9.2/lib/rubygems/custom_require.rb
+--- rubygems-1.3.7/lib/rubygems/custom_require.rb	2010-02-07 11:58:54.000000000 +0100
++++ ruby-1.9.2/lib/rubygems/custom_require.rb	2010-12-02 14:42:41.000000000 +0100
+@@ -4,8 +4,6 @@
+ # See LICENSE.txt for permissions.
+ #++
+ 
+-require 'rubygems'
+-
+ module Kernel
+ 
+   ##
+@@ -30,17 +28,17 @@
+   def require(path) # :doc:
+     gem_original_require path
+   rescue LoadError => load_error
+-    if load_error.message =~ /#{Regexp.escape path}\z/ and
+-       spec = Gem.searcher.find(path) then
+-      Gem.activate(spec.name, "= #{spec.version}")
+-      gem_original_require path
+-    else
+-      raise load_error
++    if load_error.message.end_with?(path)
++      if Gem.try_activate(path)
++        return gem_original_require(path)
++      end
+     end
++
++    raise load_error
+   end
+ 
+   private :require
+   private :gem_original_require
+ 
+-end
++end unless Kernel.private_method_defined?(:gem_original_require)
+ 
+diff -ur rubygems-1.3.7/lib/rubygems/install_update_options.rb ruby-1.9.2/lib/rubygems/install_update_options.rb
+--- rubygems-1.3.7/lib/rubygems/install_update_options.rb	2010-04-20 07:13:19.000000000 +0200
++++ ruby-1.9.2/lib/rubygems/install_update_options.rb	2010-12-02 14:42:41.000000000 +0100
+@@ -59,8 +59,7 @@
+     end
+ 
+     add_option(:"Install/Update", '-t', '--[no-]test',
+-               'Run unit tests prior to installation') do |value, options|
+-      options[:test] = value
++               'Ignored; just for compatiblity') do |value, options|
+     end
+ 
+     add_option(:"Install/Update", '-w', '--[no-]wrappers',
+@@ -110,7 +109,7 @@
+   # Default options for the gem install command.
+ 
+   def install_update_defaults_str
+-    '--rdoc --no-force --no-test --wrappers'
++    '--rdoc --no-force --wrappers'
+   end
+ 
+ end
+diff -ur rubygems-1.3.7/lib/rubygems/require_paths_builder.rb ruby-1.9.2/lib/rubygems/require_paths_builder.rb
+--- rubygems-1.3.7/lib/rubygems/require_paths_builder.rb	2010-02-07 11:58:54.000000000 +0100
++++ ruby-1.9.2/lib/rubygems/require_paths_builder.rb	2010-12-02 14:42:41.000000000 +0100
+@@ -2,15 +2,11 @@
+ 
+ module Gem::RequirePathsBuilder
+   def write_require_paths_file_if_needed(spec = @spec, gem_home = @gem_home)
+-    return if spec.require_paths == ["lib"] &&
+-              (spec.bindir.nil? || spec.bindir == "bin")
+-    file_name = File.join(gem_home, 'gems', "#{@spec.full_name}", ".require_paths")
+-    file_name.untaint
+-    File.open(file_name, "w") do |file|
+-      spec.require_paths.each do |path|
+-        file.puts path
+-      end
+-      file.puts spec.bindir if spec.bindir
++    require_paths = spec.require_paths
++    return if require_paths.size == 1 and require_paths.first == "lib"
++    file_name = "#{gem_home}/gems/#{@spec.full_name}/.require_paths".untaint
++    File.open(file_name, "wb") do |file|
++      file.puts require_paths
+     end
+   end
+ end
+diff -ur rubygems-1.3.7/lib/rubygems/test_utilities.rb ruby-1.9.2/lib/rubygems/test_utilities.rb
+--- rubygems-1.3.7/lib/rubygems/test_utilities.rb	2010-04-20 07:52:19.000000000 +0200
++++ ruby-1.9.2/lib/rubygems/test_utilities.rb	2010-12-02 14:42:41.000000000 +0100
+@@ -131,30 +131,17 @@
+ #--
+ # This class was added to flush out problems in Rubinius' IO implementation.
+ 
+-class TempIO
+-
+-  @@count = 0
+-
++class TempIO < Tempfile
+   def initialize(string = '')
+-    @tempfile = Tempfile.new "TempIO-#{@@count += 1}"
+-    @tempfile.binmode
+-    @tempfile.write string
+-    @tempfile.rewind
+-  end
+-
+-  def method_missing(meth, *args, &block)
+-    @tempfile.send(meth, *args, &block)
+-  end
+-
+-  def respond_to?(meth)
+-    @tempfile.respond_to? meth
++    super "TempIO"
++    binmode
++    write string
++    rewind
+   end
+ 
+   def string
+-    @tempfile.flush
+-
+-    Gem.read_binary @tempfile.path
++    flush
++    Gem.read_binary path
+   end
+-
+ end
+ 
+diff -ur rubygems-1.3.7/lib/rubygems/validator.rb ruby-1.9.2/lib/rubygems/validator.rb
+--- rubygems-1.3.7/lib/rubygems/validator.rb	2010-04-20 07:52:15.000000000 +0200
++++ ruby-1.9.2/lib/rubygems/validator.rb	2010-12-02 14:42:41.000000000 +0100
+@@ -165,6 +165,7 @@
+     errors
+   end
+ 
++=begin
+   if RUBY_VERSION < '1.9' then
+     class TestRunner
+       def initialize(suite, ui)
+@@ -192,6 +193,7 @@
+ 
+     autoload :TestRunner, 'test/unit/ui/testrunnerutilities'
+   end
++=end
+ 
+   ##
+   # Runs unit tests for a given gem specification
+@@ -212,6 +214,7 @@
+ 
+     test_files.each do |f| require f end
+ 
++=begin
+     if RUBY_VERSION < '1.9' then
+       suite = Test::Unit::TestSuite.new("#{gem_spec.name}-#{gem_spec.version}")
+ 
+@@ -226,6 +229,9 @@
+       result = MiniTest::Unit.new
+       result.run
+     end
++=end
++    result = MiniTest::Unit.new
++    result.run
+ 
+     result
+   ensure
+diff -ur rubygems-1.3.7/lib/rubygems.rb ruby-1.9.2/lib/rubygems.rb
+--- rubygems-1.3.7/lib/rubygems.rb	2010-05-14 05:59:10.000000000 +0200
++++ ruby-1.9.2/lib/rubygems.rb	2010-12-02 14:42:41.000000000 +0100
+@@ -7,6 +7,11 @@
+ 
+ gem_disabled = !defined? Gem
+ 
++unless gem_disabled
++  # Nuke the Quickloader stuff
++  Gem::QuickLoader.remove
++end
++
+ require 'rubygems/defaults'
+ require 'thread'
+ require 'etc'
+@@ -487,26 +492,8 @@
+ 
+   ##
+   # Finds the user's home directory.
+-  #--
+-  # Some comments from the ruby-talk list regarding finding the home
+-  # directory:
+-  #
+-  #   I have HOME, USERPROFILE and HOMEDRIVE + HOMEPATH. Ruby seems
+-  #   to be depending on HOME in those code samples. I propose that
+-  #   it should fallback to USERPROFILE and HOMEDRIVE + HOMEPATH (at
+-  #   least on Win32).
+ 
+   def self.find_home
+-    unless RUBY_VERSION > '1.9' then
+-      ['HOME', 'USERPROFILE'].each do |homekey|
+-        return ENV[homekey] if ENV[homekey]
+-      end
+-
+-      if ENV['HOMEDRIVE'] && ENV['HOMEPATH'] then
+-        return "#{ENV['HOMEDRIVE']}#{ENV['HOMEPATH']}"
+-      end
+-    end
+-
+     File.expand_path "~"
+   rescue
+     if File::ALT_SEPARATOR then
+@@ -594,17 +581,13 @@
+   # so you can override the gem_prelude.rb default $LOAD_PATH paths.
+ 
+   def self.load_path_insert_index
+-    index = $LOAD_PATH.index ConfigMap[:sitelibdir]
++    $LOAD_PATH.index { |p| p.instance_variable_defined? :@gem_prelude_index }
++  end
+ 
+-    $LOAD_PATH.each_with_index do |path, i|
+-      if path.instance_variables.include?(:@gem_prelude_index) or
+-        path.instance_variables.include?('@gem_prelude_index') then
+-        index = i
+-        break
+-      end
++  def self.remove_prelude_paths
++    Gem::QuickLoader::GemLoadPaths.each do |path|
++      $LOAD_PATH.delete(path)
+     end
+-
+-    index
+   end
+ 
+   ##
+@@ -1048,7 +1031,7 @@
+ 
+ module Kernel
+ 
+-  undef gem if respond_to? :gem # defined in gem_prelude.rb on 1.9
++  remove_method :gem if respond_to?(:gem, true) # defined in gem_prelude.rb on 1.9
+ 
+   ##
+   # Use Kernel#gem to activate a specific version of +gem_name+.
+@@ -1126,13 +1109,27 @@
+ 
+ require 'rubygems/config_file'
+ 
++class << Gem
++  remove_method :try_activate if Gem.respond_to?(:try_activate, true)
++
++  def try_activate(path)
++    spec = Gem.searcher.find(path)
++    return false unless spec
++
++    Gem.activate(spec.name, "= #{spec.version}")
++    return true
++  end
++end
++
+ ##
+ # Enables the require hook for RubyGems.
+ #
+-# Ruby 1.9 allows --disable-gems, so we require it when we didn't detect a Gem
+-# constant at rubygems.rb load time.
++# if --disable-rubygems was used, then the prelude wasn't loaded, so
++# we need to load the custom_require now.
+ 
+-require 'rubygems/custom_require' if gem_disabled or RUBY_VERSION < '1.9'
++if gem_disabled
++  require 'rubygems/custom_require'
++end
+ 
+ Gem.clear_paths
+ 
+diff -ur rubygems-1.3.7/util/gem_prelude.rb ruby-1.9.2/util/gem_prelude.rb
+--- rubygems-1.3.7/util/gem_prelude.rb	2010-04-20 07:58:13.000000000 +0200
++++ ruby-1.9.2/util/gem_prelude.rb	2010-12-02 14:42:40.000000000 +0100
+@@ -13,7 +13,8 @@
+   module Kernel
+ 
+     def gem(gem_name, *version_requirements)
+-      Gem.push_gem_version_on_load_path(gem_name, *version_requirements)
++      Gem::QuickLoader.load_full_rubygems_library
++      gem gem_name, *version_requirements
+     end
+     private :gem
+   end
+@@ -136,35 +137,36 @@
+ 
+       @loaded_full_rubygems_library = false
+ 
+-      def self.load_full_rubygems_library
++      def self.remove
+         return if @loaded_full_rubygems_library
+ 
+         @loaded_full_rubygems_library = true
+ 
+         class << Gem
+-          Gem::GEM_PRELUDE_METHODS.each do |method_name|
+-            undef_method method_name
+-          end
+-          undef_method :const_missing
+-          undef_method :method_missing
++          undef_method(*Gem::GEM_PRELUDE_METHODS)
+         end
+ 
++        remove_method :const_missing
++        remove_method :method_missing
++
+         Kernel.module_eval do
+           undef_method :gem if method_defined? :gem
+         end
++      end
++
++      def self.load_full_rubygems_library
++        return false if @loaded_full_rubygems_library
++
++        remove
+ 
+         $".delete path_to_full_rubygems_library
+-        $".each do |path|
+-          if /#{Regexp.escape File::SEPARATOR}rubygems\.rb\z/ =~ path
+-            raise LoadError, "another rubygems is already loaded from #{path}"
+-          end
++        if $".any? {|path| path.end_with?('/rubygems.rb')}
++          raise LoadError, "another rubygems is already loaded from #{path}"
+         end
++
+         require 'rubygems'
+-      end
+ 
+-      def self.fake_rubygems_as_loaded
+-        path = path_to_full_rubygems_library
+-        $" << path unless $".include?(path)
++        return true
+       end
+ 
+       def self.path_to_full_rubygems_library
+@@ -181,95 +183,6 @@
+         end
+       end
+ 
+-      GemPaths = {}
+-      GemVersions = {}
+-
+-      def push_gem_version_on_load_path(gem_name, *version_requirements)
+-        if version_requirements.empty?
+-          unless GemPaths.has_key?(gem_name) then
+-            raise Gem::LoadError, "Could not find RubyGem #{gem_name} (>= 0)\n"
+-          end
+-
+-          # highest version gems already active
+-          return false
+-        else
+-          if version_requirements.length > 1 then
+-            QuickLoader.load_full_rubygems_library
+-            return gem(gem_name, *version_requirements)
+-          end
+-
+-          requirement, version = version_requirements[0].split
+-          requirement.strip!
+-
+-          if loaded_version = GemVersions[gem_name] then
+-            case requirement
+-            when ">", ">=" then
+-              return false if
+-                (loaded_version <=> Gem.integers_for(version)) >= 0
+-            when "~>" then
+-              required_version = Gem.integers_for version
+-
+-              return false if loaded_version.first == required_version.first
+-            end
+-          end
+-
+-          QuickLoader.load_full_rubygems_library
+-          gem gem_name, *version_requirements
+-        end
+-      end
+-
+-      def integers_for(gem_version)
+-        numbers = gem_version.split(".").collect {|n| n.to_i}
+-        numbers.pop while numbers.last == 0
+-        numbers << 0 if numbers.empty?
+-        numbers
+-      end
+-
+-      def push_all_highest_version_gems_on_load_path
+-        Gem.path.each do |path|
+-          gems_directory = File.join(path, "gems")
+-
+-          if File.exist?(gems_directory) then
+-            Dir.entries(gems_directory).each do |gem_directory_name|
+-              next if gem_directory_name == "." || gem_directory_name == ".."
+-
+-              next unless gem_name = gem_directory_name[/(.*)-(.*)/, 1]
+-              new_version = integers_for($2)
+-              current_version = GemVersions[gem_name]
+-
+-              if !current_version or (current_version <=> new_version) < 0 then
+-                GemVersions[gem_name] = new_version
+-                GemPaths[gem_name] = File.join(gems_directory, gem_directory_name)
+-              end
+-            end
+-          end
+-        end
+-
+-        require_paths = []
+-
+-        GemPaths.each_value do |path|
+-          if File.exist?(file = File.join(path, ".require_paths")) then
+-            paths = File.read(file).split.map do |require_path|
+-              File.join path, require_path
+-            end
+-
+-            require_paths.concat paths
+-          else
+-            require_paths << file if File.exist?(file = File.join(path, "bin"))
+-            require_paths << file if File.exist?(file = File.join(path, "lib"))
+-          end
+-        end
+-
+-        # "tag" the first require_path inserted into the $LOAD_PATH to enable
+-        # indexing correctly with rubygems proper when it inserts an explicitly
+-        # gem version
+-        unless require_paths.empty? then
+-          require_paths.first.instance_variable_set(:@gem_prelude_index, true)
+-        end
+-        # gem directories must come after -I and ENV['RUBYLIB']
+-        $:[$:.index{|e|e.instance_variable_defined?(:@gem_prelude_index)}||-1,0] = require_paths
+-      end
+-
+       def const_missing(constant)
+         QuickLoader.load_full_rubygems_library
+ 
+@@ -289,11 +202,29 @@
+ 
+     extend QuickLoader
+ 
++    def self.try_activate(path)
++      # This method is only hit when the custom require is hit the first time.
++      # So we go off and dutifully load all of rubygems and retry the call
++      # to Gem.try_activate. We retry because full rubygems replaces this
++      # method with one that actually tries to find a gem for +path+ and load it.
++      #
++      # This is conditional because in the course of loading rubygems, the custom
++      # require will call back into here before all of rubygems is loaded. So
++      # we must not always retry the call. We only redo the call when
++      # load_full_rubygems_library returns true, which it only does the first
++      # time it's called.
++      #
++      if QuickLoader.load_full_rubygems_library
++        return Gem.try_activate(path)
++      end
++
++      return false
++    end
++
+   end
+ 
+   begin
+-    Gem.push_all_highest_version_gems_on_load_path
+-    Gem::QuickLoader.fake_rubygems_as_loaded
++    require 'lib/rubygems/custom_require.rb'
+   rescue Exception => e
+     puts "Error loading gem paths on load path in gem_prelude"
+     puts e
