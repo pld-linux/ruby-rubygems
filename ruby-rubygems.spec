@@ -12,6 +12,7 @@ License:	GPL
 Group:		Development/Languages
 Source0:	https://rubygems.org/gems/rubygems-update-%{version}.gem
 # Source0-md5:	cad98b534ae8e1d65f9a5cf00fdaa89f
+Source1:	operating_system.rb
 URL:		https://rubygems.org/
 BuildRequires:	rpm-rubyprov
 BuildRequires:	rpmbuild(macros) >= 1.665
@@ -74,6 +75,10 @@ install -d $RPM_BUILD_ROOT{%{ruby_vendorlibdir},%{ruby_specdir}}
 cp -a lib/* $RPM_BUILD_ROOT%{ruby_vendorlibdir}
 cp -p %{pkgname}-update-%{version}.gemspec $RPM_BUILD_ROOT%{ruby_specdir}
 
+# Install custom operating_system.rb.
+install -d $RPM_BUILD_ROOT%{ruby_vendorlibdir}/rubygems/defaults
+cp -p %{SOURCE1} $RPM_BUILD_ROOT%{ruby_vendorlibdir}/rubygems/defaults
+
 # please use system ca-certificagtes
 %{__rm} -r $RPM_BUILD_ROOT%{ruby_vendorlibdir}/rubygems/ssl_certs
 
@@ -100,6 +105,7 @@ rm -rf $RPM_BUILD_ROOT
 %{ruby_vendorlibdir}/rubygems/*.rb
 %{ruby_vendorlibdir}/rubygems/commands
 %{ruby_vendorlibdir}/rubygems/core_ext
+%{ruby_vendorlibdir}/rubygems/defaults
 %{ruby_vendorlibdir}/rubygems/ext
 %{ruby_vendorlibdir}/rubygems/package
 %{ruby_vendorlibdir}/rubygems/request
