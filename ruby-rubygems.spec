@@ -6,12 +6,12 @@
 Summary:	Ruby package manager
 Summary(pl.UTF-8):	Zarządca pakietów dla języka Ruby
 Name:		ruby-%{pkgname}
-Version:	2.6.13
+Version:	2.6.14
 Release:	1
 License:	GPL
 Group:		Development/Languages
 Source0:	https://rubygems.org/gems/rubygems-update-%{version}.gem
-# Source0-md5:	cad98b534ae8e1d65f9a5cf00fdaa89f
+# Source0-md5:	07c4a584cb87246aa1c52173bf64fde7
 Source1:	operating_system.rb
 URL:		https://rubygems.org/
 BuildRequires:	rpm-rubyprov
